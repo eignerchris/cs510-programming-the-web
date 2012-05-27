@@ -1,0 +1,21 @@
+<div class="container">
+  <div class="page-header">
+    <h2>Queue</h2>
+  </div>
+
+  <div class="well">
+    <form action="/queue/clear" class="pull-right" method="POST">
+      <input class="btn btn-danger" type="submit" value="Clear Queue">
+    </form>
+  </div>
+
+  <% unless @queue.empty? %>
+    <ul>
+      <% @queue.each do |ticker| %>
+        <li><%= ticker %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No work in queue</p>
+  <% end %>
+</div>

@@ -1,0 +1,8 @@
+.clearfix {
+  float: none;
+  clear: both;
+}
+
+.actions form {
+  margin-right: 10px;
+}

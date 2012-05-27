@@ -1,0 +1,10 @@
+<div class="container">
+  <div class="page-header">
+    <h2>Top 10 Most Talked About</h2>
+  </div>
+  <ol>
+    <% @top.each do |datum| %>
+      <li><a href="/tickers/<%= datum[0] %>"><%= datum[0] %></a></li>
+    <% end %>
+  </ol>
+</div>

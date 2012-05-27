@@ -1,0 +1,59 @@
+<div class="container">
+  <div class="page-header">
+    <h2>Tickers</h2>
+  </div>
+
+  <div class="actions well">
+    <form class="form form-search search-query pull-left">
+      <label class="inline">Filter Tickers:</label>
+      <input class="input-medium search-query" type='text' placeholder="MSFT">
+    </form>
+
+    <form action="/index" class="form-inline pull-left" method="POST">
+      <input class="input-mini" type="text" name="symbol" placeholder="MSFT">
+      <input class="btn btn-primary" type="submit" value="Index">
+    </form>
+
+    <form action="/reindex" class="pull-left" method="POST">
+      <input class="btn btn-primary" type="submit" value="Reindex All Tickers">
+    </form>
+
+    <form action="/tickers/clear" class="pull-right" method="POST">
+      <input class="btn btn-danger" type="submit" value="Clear Ticker Data">
+    </form>
+  </div>
+
+  <div class="clearfix"></div>
+
+  <% unless @tickers_data.empty? %>
+    <table class="table table-bordered table-striped">
+      <thead>
+        <th><a href="#">Ticker</a></th>
+        <th><a href="#">Article Count</a></th>
+        <th><a href="#">Last Indexed</a></th>
+        <th>Action</th>
+      </thead>
+      <tbody>
+        <% @tickers_data.each_pair do |ticker, data| %>
+          <tr>
+            <td><%= ticker %></td>
+            <td><%= data[:article_count] %></td>
+            <td><%= data[:last_indexed] %></td>
+            <td>
+              <a href="/tickers/<%= ticker %>">Details</a> | 
+              <a href="/tickers/<%= ticker %>/reindex">Reindex</a>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No data found</p>
+  <% end %>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  $(document).ready(function(){
+    $('input.search-query').quicksearch('table tbody tr');
+  });
+</script>

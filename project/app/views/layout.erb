@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  
+  <head>
+    <title>Stocker</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/site.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/jquery.quicksearch.js"></script>
+  </head>
+
+  <body>
+    <header>
+      <div class="navbar">
+        <div class="navbar-inner">
+          <div class="container">
+            <a class="brand" href="/" title="Home">Spider Admin Console</a>
+            <ul class="nav">
+              <li><a href="/tickers">Tickers</a></li>
+              <li><a href="/sources">Sources</a></li>
+              <li><a href="/queue">Queue</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <% if flash[:info] %>
+        <div class="alert alert-info">
+          <a class="close" data-dismiss="alert" href="#">×</a>
+          <%= flash[:info] %>
+        </div>
+      <% end %>
+
+      <% if flash[:error] %>
+        <div class="alert alert-error">
+          <a class="close" data-dismiss="alert" href="#">×</a>
+          <%= flash[:error] %>
+        </div>
+      <% end %>
+
+      <% if flash[:success] %>
+        <div class="alert alert-success">
+          <a class="close" data-dismiss="alert" href="#">×</a>
+          <%= flash[:success] %>
+        </div>
+      <% end %>
+    </div>
+
+    <%= yield %>
+  </body>
+
+</html>

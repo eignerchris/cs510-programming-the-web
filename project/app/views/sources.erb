@@ -1,0 +1,26 @@
+<div class="container">
+  <div class="page-header">
+    <h2>Sources</h2>    
+  </div>
+
+  <div class="well">
+    <form action="/sources" method="POST" class="form-inline pull-left">
+      <input type="text" name="url" placeholder="http://money.cnn.com/">
+      <input class="btn btn-primary" type="submit" value="Add Source">
+    </form>
+
+    <form action="/sources/clear" class="pull-right" method="POST">
+      <input class="btn btn-danger" type="submit" value="Clear Sources">
+    </form>
+  </div>
+
+  <% unless @sources.empty? %>
+    <ol>
+      <% @sources.each do |source| %>
+        <li><a target="top" href="<%= source %>"><%= source %></a></li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p>No sources found</p>
+  <% end %>
+</div>

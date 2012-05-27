@@ -1,0 +1,6 @@
+source :rubygems
+
+gem 'thin'
+gem 'sinatra', :require => 'sinatra/base'
+gem 'redis'
+gem 'rack-flash3', :require => 'rack-flash'
