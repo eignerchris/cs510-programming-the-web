@@ -7,20 +7,31 @@ class App < Sinatra::Base
   $redis = Redis.new
 
   get '/?' do
-    @tickers                               = $redis.smembers('tickers') || []
-    @tickers_with_counts                   = @tickers.collect { |symbol| [symbol, $redis.scard(symbol)] }
-    @tickers_with_counts.sort! {|x,y| x[1] <=> y[1]}
-    @top                                   = @tickers_with_counts[0..9].reverse
+    @tickers                                = get_tickers
+    @tickers_with_counts                    = @tickers.collect { |symbol| [symbol, $redis.scard(symbol)] }
+    @tickers_with_counts.sort! { |x,y| x[1] <=> y[1] }
+    @top                                    = @tickers_with_counts[0..9].reverse
+
+    @hits_keys = $redis.keys 'hits:*'
+    @hits = []
+    @hits_keys.each do |host_key|
+      host = host_key.gsub("hits:", '')
+      @hits << [host, $redis.get(host_key).to_i]
+    end
+
+    @hits = @hits.sort { |x, y| x[1] <=> y[1] }.reverse[0..9]
     erb :index
   end
 
   get '/tickers' do
-    @tickers           = $redis.smembers('tickers') || []
+    @tickers      = get_tickers
     @tickers_data = {}
-    @tickers.each { |t| @tickers_data[t] = {:last_indexed => nil, :article_count => nil }}
+    @tickers.each { |t| @tickers_data[t] = { :last_indexed => nil, :article_count => nil } }
     @tickers.each do |symbol| 
       @tickers_data[symbol][:article_count] = $redis.scard symbol
-      @tickers_data[symbol][:last_indexed]  = $redis.get "indextime:#{@ticker}"
+      time = $redis.get "indextime:#{symbol.upcase}"
+      time = DateTime.strptime(time,'%s') if time
+      @tickers_data[symbol][:last_indexed]  = time
     end
 
     erb :'tickers/index'
@@ -33,14 +44,15 @@ class App < Sinatra::Base
   end
 
   get '/tickers/:symbol/reindex' do
-    $redis.lpush('work', params[:symbol])
-    $redis.set("indextime:#{@ticker}", DateTime.now);
-    flash[:success] = "Reindexing #{params[:symbol]}"
+    @ticker = params[:symbol].upcase
+    queue_job @ticker
+    set_timestamp @ticker
+    flash[:success] = "Reindexing #{@ticker}"
     redirect '/tickers'
   end
 
   post '/tickers/clear' do
-    @tickers = $redis.smembers 'tickers'
+    @tickers = get_tickers
     @tickers.each { |t| $redis.del t }
     $redis.del 'tickers'
     flash[:success] = "Tickers data has been cleared"
@@ -48,7 +60,7 @@ class App < Sinatra::Base
   end
 
   get '/queue' do
-    @queue = $redis.lrange('work', 0, -1)
+    @queue = get_queued_jobs
     erb :queue
   end
 
@@ -77,10 +89,11 @@ class App < Sinatra::Base
   end
 
   post '/index' do
-    if params[:symbol]
-      $redis.lpush('work', params[:symbol])
-      $redis.sadd('tickers', params[:symbol].upcase)
-      flash[:success] = "Beginning index of #{params[:symbol]}"
+    @ticker = params[:symbol]
+    if @ticker
+      queue_job @ticker
+      $redis.sadd('tickers', @ticker)
+      flash[:success] = "Beginning index of #{@ticker}"
       redirect '/tickers'
     else
       flash[:error] = "Please provide a ticker to index"
@@ -91,10 +104,10 @@ class App < Sinatra::Base
   post '/reindex' do
     @tickers = $redis.smembers('tickers')
     @tickers.each do |ticker| 
-      $redis.lpush('work', ticker)
-      $redis.set("indextime:#{ticker}", DateTime.now)
+      queue_job ticker
+      set_timestamp ticker
     end
-    flash[:success] = "Beginning index of #{params[:symbol]}"
+    flash[:success] = "Beginning index of all tickers"
     redirect '/tickers'
   end
 
@@ -102,5 +115,23 @@ class App < Sinatra::Base
     $redis.flushall
     flash[:success] = "Sources, Tickers, and Indexed data have been cleared"
     redirect '/'
+  end
+
+  private
+
+  def queue_job(symbol)
+    $redis.lpush('work', symbol)
+  end
+
+  def get_tickers
+    $redis.smembers('tickers') || []
+  end
+
+  def get_queued_jobs
+    $redis.lrange('work', 0, -1)
+  end
+
+  def set_timestamp(symbol)
+    $redis.set("indextime:#{symbol}", Time.now.to_i);
   end
 end

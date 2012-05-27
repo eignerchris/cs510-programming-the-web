@@ -1,17 +1,13 @@
 # Stock News Indexer #
 
-This application is a news discovery and browsing engine that consists of 3 components: the indexer, the processor, and a web app for browsing indexed content and managing the indexer.
+This application is a stock news discovery engine that consists of 3 components: the indexer and a web app for browsing indexed content and managing the system.
 
 ## Architecture ##
 
 ### Indexer ###
-The indexer is a robots.txt/sitemap-obeying recursive indexer that discovers news for stock tickers. The indexer takes as input a stock symbol, crawls the web for news articles that contain said ticker, and queues those web pages for processing by the processor. When a match is found, it is written to a key-value based datastore for processing. When
+The indexer is a robots.txt-obeying recursive indexer that discovers news articles for stock tickers. The indexer takes as input a stock symbol, crawls several sources for news articles that contain said ticker, and when a match is found, it is written to a key-value based datastore.
 
-### Processor ###
-The processor is a worker that polls a queue and processes key/value pairs as they arrive. A single piece of data consists of a ticker and web url tuple. When the worker receives a job, it inserts that url into a long-term datastore for the given stock ticker.
+The indexer containers two parts, the indexing portion and the worker. The worker monitors a queue and when it receives a job, calls the indexer on that job. The indexer begins by searching both preset sources and those it has discovered to be worthy source sites. It checks a potentially-cached robots.txt file to ensure it is 'friendly' and searches the page for the supplied argument, in this case a stock symbol.
 
 ### Web App ###
-The web application is a control center for operating the indexer and browsing new articles for the various stock tickers.
-
-### Flow ###
-The indexer is given a stock ticker and begins by verifying that the stock ticker is valid via an API call to FILL IN HERE. Next it fetches from a long-term datastore a set of seed domains to start crawling. For each URL discovered, the base domain is added to the set of seeds and each page tested for matches. If a match is found... 
+The web application is a control center for operating the indexer, browsing news articles for the various stock tickers, and managing the system as a whole. It consists of a simple Sinatra web application and leverages Twitter Bootstrap for consistent and easy styling. Using the web application one can add new tickers to be indexed, add new sources, view the articles indexed for a given stock symbol, view jobs currently in the queue, and clear all data.

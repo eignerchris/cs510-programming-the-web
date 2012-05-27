@@ -63,6 +63,7 @@ sub spider {
   my $host   = $uri->host;
   $host      = "http://$host" unless $host =~ /http/i;
 
+  # error checking
   return unless defined($url);
   return unless defined($level);
   return unless defined($ticker);
@@ -78,11 +79,16 @@ sub spider {
   my($headers, $body) = &get_using_robots($url);
   $redis->sadd('visited', $url);
 
-  # TODO: whitespace in ticker?
   if($headers =~ /200 OK/) {
-    if($body =~ /($ticker)/g) {
+    if($body =~ /($ticker)/ig) {
       $redis->sadd( "tickers", "$ticker" );
       $redis->sadd( "$ticker", "$url" );
+
+      # TODO: keep track of num matches for a given host,
+      # for ranking usefulness of sources
+      # dynamically add/remove sources by usefulness
+      &track_hit($host);
+      #&track_word_analytics();
     }
 
     my $extor = HTML::SimpleLinkExtor->new();
@@ -98,6 +104,12 @@ sub spider {
     }
   }
   return;
+}
+
+# tracks "hit" in redis for some simple analytics
+sub track_hit{
+  my $host = $_[0];
+  $redis->incr("hits:$host");
 }
 
 sub already_visited {

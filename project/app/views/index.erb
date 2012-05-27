@@ -1,4 +1,14 @@
 <div class="container">
+
+  <div class="page-header">
+    <h2>Top 10 Most Useful</h2>
+  </div>
+  <ol>
+    <% @hits.each do |datum| %>
+      <li><%= datum[0] %> (<%= datum[1] %>)</li>
+    <% end %>
+  </ol>
+
   <div class="page-header">
     <h2>Top 10 Most Talked About</h2>
   </div>
