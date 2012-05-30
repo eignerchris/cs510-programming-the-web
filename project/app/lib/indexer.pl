@@ -11,6 +11,7 @@ my $ticker = $ARGV[0];
 $redis     = Redis->new || die "Failed to connect to Redis";
 @sources   = $redis->smembers("sources");
 $LEVEL_MAX = 2;
+$SOURCE_HIT_COUNT_THRESHOLD = 100;
 
 # reset visited for development
 $redis->del('visited');

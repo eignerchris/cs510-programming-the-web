@@ -84,16 +84,16 @@ sub spider {
       $redis->sadd( "tickers", "$ticker" );
       $redis->sadd( "$ticker", "$url" );
 
-      # TODO: keep track of num matches for a given host,
-      # for ranking usefulness of sources
       # dynamically add/remove sources by usefulness
       &track_hit($host);
-      #&track_word_analytics();
+      my $hit_count = &get_hits($host);
+      if($hit_count > $SOURCE_HIT_COUNT_THRESHOLD) {
+        $host = "$host/" unless(substr($host,length($host)-1,1) eq "\\");
+        $redis->sadd('sources', $host);
+      }
     }
 
-    my $extor = HTML::SimpleLinkExtor->new();
-    $extor->parse($body);
-    my @hrefs = $extor->a;
+    my @hrefs = &get_links($body);
 
     foreach my $link (@hrefs) {
       $link = "$host$link" if($link !~ /http/);
@@ -106,15 +106,25 @@ sub spider {
   return;
 }
 
-# tracks "hit" in redis for some simple analytics
+# track "hit" in redis for some simple analytics
 sub track_hit{
   my $host = $_[0];
   $redis->incr("hits:$host");
 }
 
+sub get_hits {
+  $redis->get("hits:$_[0]");
+}
+
 sub already_visited {
   my $url = $_[0];
   $redis->sismember('visited', $url);
+}
+
+sub get_links {
+  my $extor = HTML::SimpleLinkExtor->new();
+  $extor->parse($_[0]);
+  return $extor->a;
 }
 
 1;

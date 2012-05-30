@@ -10,7 +10,7 @@ class App < Sinatra::Base
     @tickers                                = get_tickers
     @tickers_with_counts                    = @tickers.collect { |symbol| [symbol, $redis.scard(symbol)] }
     @tickers_with_counts.sort! { |x,y| x[1] <=> y[1] }
-    @top                                    = @tickers_with_counts[0..9].reverse
+    @top                                    = @tickers_with_counts.reverse[0..9]
 
     @hits_keys = $redis.keys 'hits:*'
     @hits = []
@@ -102,6 +102,8 @@ class App < Sinatra::Base
   end
 
   post '/reindex' do
+    @sources = $redis.smembers('sources')
+    @sources.each { |source| $redis.del "hits:#{source}" }
     @tickers = $redis.smembers('tickers')
     @tickers.each do |ticker| 
       queue_job ticker
