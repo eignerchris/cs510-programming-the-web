@@ -77,21 +77,29 @@ sub spider {
   print "[Indexer $ticker]: indexing $url at level $level\n";
 
   my($headers, $body) = &get_using_robots($url);
+
+  # remove content between script and style tags
+  $body =~ s/<script .*?<\/script>//ig;
+  $body =~ s/<style .*?<\/style>//ig;
+  
+  # flag that this url has been visited
   $redis->sadd('visited', $url);
 
   if($headers =~ /200 OK/) {
     if($body =~ /\W($ticker)\W/ig) {
       $redis->sadd( "tickers", "$ticker" );
       $redis->sadd( "$ticker", "$url" );
-
-      # dynamically add/remove sources by usefulness
+      
       &track_hit($host);
+
+      # dynamically add sources by usefulness
       my $hit_count = &get_hits($host);
       if($hit_count > $SOURCE_HIT_COUNT_THRESHOLD) {
         $host = "$host/" unless(substr($host,length($host)-1,1) eq "\\");
         $redis->sadd('sources', $host);
       }
     } else {
+      # TODO: remove host if usefulness drops too low
       &track_miss($host);
     }
 
@@ -114,6 +122,7 @@ sub track_hit{
   $redis->incr("hits:$host");
 }
 
+# track "miss" in redis for some simple analytics
 sub track_miss {
   my $host = $_[0];
   $redis->incr("misses:$host");

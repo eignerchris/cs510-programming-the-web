@@ -3,18 +3,42 @@
   <div class="page-header">
     <h2>Most Hits</h2>
   </div>
-  <ol>
-    <% @hits.each do |datum| %>
-      <li><%= datum[0] %> (<%= datum[1] %>)</li>
-    <% end %>
-  </ol>
+  <% unless @hits.empty? %>
+    <ol>
+      <% @hits.each do |datum| %>
+        <li><a href="<%= datum[0] %>"><%= datum[0] %></a> (<%= datum[1] %>)</li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p>No data for hits</p>
+  <% end %>
+
+  <div class="page-header">
+    <h2>Most Misses</h2>
+  </div>
+
+  <% unless @misses.empty? %>
+    <ol>
+      <% @misses.each do |datum| %>
+        <li><a href="<%= datum[0] %>"><%= datum[0] %></a> (<%= datum[1] %>)</li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p>No data for misses</p>
+  <% end %>
 
   <div class="page-header">
     <h2>Most Talked About</h2>
   </div>
-  <ol>
-    <% @top.each do |datum| %>
-      <li><a href="/tickers/<%= datum[0] %>"><%= datum[0] %></a></li>
-    <% end %>
-  </ol>
+
+  <% unless @top.empty? %>
+    <ol>
+      <% @top.each do |datum| %>
+        <li><a href="/tickers/<%= datum[0] %>"><%= datum[0] %></a></li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p>No data for most talked about</p>
+  <% end %>
+
 </div>

@@ -12,14 +12,23 @@ class App < Sinatra::Base
     @tickers_with_counts.sort! { |x,y| x[1] <=> y[1] }
     @top                                    = @tickers_with_counts.reverse[0..9]
 
-    @hits_keys = $redis.keys 'hits:*'
-    @hits = []
+    @hits_keys   = $redis.keys 'hits:*'
+    @misses_keys = $redis.keys 'misses:*'
+    
+    @hits      = []
+    @misses    = []
     @hits_keys.each do |host_key|
       host = host_key.gsub("hits:", '')
       @hits << [host, $redis.get(host_key).to_i]
     end
 
-    @hits = @hits.sort { |x, y| x[1] <=> y[1] }.reverse[0..9]
+    @misses_keys.each do |host_key|
+      host = host_key.gsub("misses:", '')
+      @misses << [host, $redis.get(host_key).to_i]
+    end
+    
+    @misses = @misses.sort { |x, y| x[1] <=> y[1] }.reverse[0..9]
+    @hits   = @hits.sort { |x, y| x[1] <=> y[1] }.reverse[0..9]
     erb :index
   end
 
@@ -44,6 +53,7 @@ class App < Sinatra::Base
   end
 
   get '/tickers/:symbol/reindex' do
+    $redis.del 'visited'
     @ticker = params[:symbol].upcase
     queue_job @ticker
     set_timestamp @ticker
@@ -102,8 +112,10 @@ class App < Sinatra::Base
   end
 
   post '/reindex' do
+    $redis.del 'visited'
     @sources = $redis.smembers('sources')
     @sources.each { |source| $redis.del "hits:#{source}" }
+    @sources.each { |source| $redis.del "misses:#{source}" }
     @tickers = $redis.smembers('tickers')
     @tickers.each do |ticker| 
       queue_job ticker
