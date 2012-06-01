@@ -5,7 +5,7 @@
   1. Introduction
   2. Motivation
   3. Architecture
-  4. Outstanding Issues
+  4. Issues
   5. Areas for Improvement
   6. Conclusion
 
@@ -24,13 +24,23 @@
 ### Indexer ###
   The indexer is a simple, robots.txt-obeying, forking, recusive indexer. The indexer takes as an argument a stock symbol and for each source in the list of sources, forks a child and begins spidering each source. If the symbol is found anywhere on the page, the indexer stores the url for the page and logs some statistics. The recusion depth for testing and demo was set to 2 levels, but nothing prevents it from being set higher. 
 
-  The main spider function works as follows. Given a url, the indexer initially does some very basic error checking - return if the url is nil, an empty string, matches on "doubleclick", etc. Doing so prevents us from indexing content served via ads, empty links, and the like. Next we make our request, checking Redis for a cached version of the robots.txt content for the url host along the way. If it exists, we continue. If not, we fetch it and cache it for use later. If the request response is a 200, we search the page for the supplied ticker argument. Next we collect all links on the page and call the same function again for each url.
+  The main spider function works as follows. Given a url, the indexer initially does some very basic error checking - return if the url is nil, an empty string, matches on "doubleclick", etc. Doing so prevents us from indexing content served via ads, empty links, and the like. Next we make our request, checking Redis for a cached version of the robots.txt content for the url host along the way. If it exists, we continue. If not, we fetch it and cache it for use later. If the request response is a 200, we search the page for the supplied ticker argument. Next we collect all links on the page and call the same function again for each url. Using the just-mentioned basic statistics, the indexer will actually dynamically build a set a sources when the number of "hits" becomes greater than some user defined threshold. Doing so allows the indexer to discover new sources to be used the next time it begins indexing.
 
 ### Worker ###
   So we can index more than one stock symbol at a time, I created a 'work' queue in Redis to be polled by a worker I wrote in Perl. The worker loops indefintely, checking the queue in Redis every two seconds. Jobs are pushed onto the queue either directly via redis-cli or via the web interface. If a job is found, the worker uses the Async module to fire up the indexer and return immediately, allowing us to fetch more work from the queue and index multiple tickers are the same time. 
 
-## Outstanding Issues ##
+### Web Interface ###
+  A web interface was written to explore several concepts touched on briefly during class including dynamic HTML generation and submitting content to a server via web forms. Doing so allowed me to become more familiar with those tools but also build an administrative interface for managing the indexer. 
 
+  The web interface was created using Sinatra, a minimal Ruby web framework, and Twitter Bootstrap, an HTML, CSS, and Javascript framework that adds some easy-to-use and consistent styling.
+
+  The GUI consists of four main pages. The home page contains some basic metrics about how many articles have been found at each source and a ranked list of tickers with the most articles found. The Tickers page contains a list of stock tickers and article counts. It also contains a bevy of controls for adding a new symbol to be indexed, reindexing individual tickers, or reindexing all symbols. The sources page allows you to add new sources manually. Finally, the Queue page allows you to inspect jobs in the queue to be processed. This view is largely unused as the worker digests jobs rather quickly, but it does serve as a sanity check to confirm whether jobs are actually being popped off the queue.
+
+## Issues ##
+  Like all hastily built software, this project contains several notable bugs and features that leave one wanting.
+ 
+  The most glaring bug is the simplicity with which the indexer searches for a symbol on a page. The indexer checks for a match against the entire source of the page, but only in a very rudimenary fashion - `if($body =~ /($ticker)/ig)`. What this means is that if you search for the stock symbol "FB", the indexer will consider the page a "hit" if it contains "FB", "fb" "_fb89haud_", "surfboard", or any "FB"-namespaced script, variable, or function def/call.  
+  
 ## Areas for Improvement ##
 
 ## Conclusion ##
@@ -40,11 +50,7 @@
 5.1. Purpose................................................................................................................ 3
 5.2. Software .............................................................................................................. 3
 5.3. Modules............................................................................................................... 3
-6. Readability .................................................................................................................. 3
-7. Style ............................................................................................................................ 4
-8. Source Analysis .......................................................................................................... 5
-9. Header Analysis.......................................................................................................... 6
-10. Obstacles................................................................................................................. 6PROJECT DOCUMENT NAME 
+10. Obstacles................................................................................................................. 
 
 1. Introduction
 A 1995 web study performed by a UC Berkeley research team showed trends in the World Wide 

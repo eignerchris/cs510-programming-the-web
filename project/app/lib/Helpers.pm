@@ -80,7 +80,7 @@ sub spider {
   $redis->sadd('visited', $url);
 
   if($headers =~ /200 OK/) {
-    if($body =~ /($ticker)/ig) {
+    if($body =~ /( $ticker )/ig) {
       $redis->sadd( "tickers", "$ticker" );
       $redis->sadd( "$ticker", "$url" );
 
