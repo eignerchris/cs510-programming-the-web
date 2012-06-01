@@ -80,7 +80,7 @@ sub spider {
   $redis->sadd('visited', $url);
 
   if($headers =~ /200 OK/) {
-    if($body =~ /( $ticker )/ig) {
+    if($body =~ /\W($ticker)\W/ig) {
       $redis->sadd( "tickers", "$ticker" );
       $redis->sadd( "$ticker", "$url" );
 
@@ -91,6 +91,8 @@ sub spider {
         $host = "$host/" unless(substr($host,length($host)-1,1) eq "\\");
         $redis->sadd('sources', $host);
       }
+    } else {
+      &track_miss($host);
     }
 
     my @hrefs = &get_links($body);
@@ -110,6 +112,11 @@ sub spider {
 sub track_hit{
   my $host = $_[0];
   $redis->incr("hits:$host");
+}
+
+sub track_miss {
+  my $host = $_[0];
+  $redis->incr("misses:$host");
 }
 
 sub get_hits {

@@ -38,8 +38,8 @@ class App < Sinatra::Base
   end
 
   get '/tickers/:symbol' do
-    @ticker = params[:symbol]
-    @pages = $redis.smembers @ticker.upcase
+    @ticker = params[:symbol].upcase
+    @pages = $redis.smembers @ticker
     erb :'tickers/show'
   end
 
@@ -89,7 +89,7 @@ class App < Sinatra::Base
   end
 
   post '/index' do
-    @ticker = params[:symbol]
+    @ticker = params[:symbol].upcase
     if @ticker
       queue_job @ticker
       $redis.sadd('tickers', @ticker)
