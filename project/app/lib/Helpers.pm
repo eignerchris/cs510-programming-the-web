@@ -75,7 +75,8 @@ sub spider {
   return if($url eq "*");
 
   print "[Indexer $ticker]: indexing $url at level $level\n";
-
+  $redis->sadd('hosts', $host);
+  
   my($headers, $body) = &get_using_robots($url);
 
   # remove content between script and style tags
@@ -90,14 +91,14 @@ sub spider {
       $redis->sadd( "tickers", "$ticker" );
       $redis->sadd( "$ticker", "$url" );
       
+      $host = "$host/" unless(substr($host,length($host)-1,1) eq "\\");
+      
       &track_hit($host);
 
       # dynamically add sources by usefulness
       my $hit_count = &get_hits($host);
-      if($hit_count > $SOURCE_HIT_COUNT_THRESHOLD) {
-        $host = "$host/" unless(substr($host,length($host)-1,1) eq "\\");
-        $redis->sadd('sources', $host);
-      }
+      $redis->sadd('sources', $host) if($hit_count > $SOURCE_HIT_COUNT_THRESHOLD);
+
     } else {
       # TODO: remove host if usefulness drops too low
       &track_miss($host);
